@@ -6,10 +6,10 @@ build:
 	go build
 
 deps:
-	got get -u github.com/jteeuwen/go-bindata/...
+	go get -u github.com/jteeuwen/go-bindata/...
 
 copy_assets:
-	bower install -p
+	bower --allow-root install -p
 	mkdir -p assets/js
 	mkdir -p assets/css
 	mkdir -p assets/fonts
