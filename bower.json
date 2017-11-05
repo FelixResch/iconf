@@ -1,0 +1,22 @@
+{
+  "name": "iconf",
+  "authors": [
+    "Felix Resch <resch.felix@gmail.com>"
+  ],
+  "description": "Simple configuration interface for iDHCP and iDNS",
+  "main": "templates/index.pug",
+  "license": "MIT",
+  "homepage": "https://felix.web25.org/idhcpidns/",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.2.1",
+    "font-awesome": "^4.7.0"
+  }
+}
