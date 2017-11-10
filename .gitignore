@@ -145,3 +145,4 @@ fabric.properties
 !/assets/css/w3.css
 /bindata.go
 /assets/fonts/
+/config.json

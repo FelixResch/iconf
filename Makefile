@@ -1,8 +1,12 @@
 
 all: copy_assets build
 
-build:
+build-debug:
 	go-bindata -debug ./assets/... ./templates/...
+	go build
+
+build:
+	go-bindata ./assets/... ./templates/...
 	go build
 
 deps:
