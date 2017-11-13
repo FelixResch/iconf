@@ -13,18 +13,13 @@ import (
 	"github.com/kataras/iris/context"
 	"github.com/spf13/viper"
 	"fmt"
+	"strconv"
+	"strings"
+	"github.com/kataras/golog"
 )
 
 type Visitor struct {
 	Name string
-}
-
-type DashboardInfo struct {
-	Visitor Visitor
-	ActiveDevices uint32
-	StoredNameRecords uint32
-	ActiveServers uint32
-	ActiveGames uint32
 }
 
 func main() {
@@ -44,7 +39,7 @@ func main() {
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr: viper.GetString("redisArr"),
+		Addr: viper.GetString("redisAddr"),
 		Password: viper.GetString("redisPw"),
 		DB: viper.GetInt("redisDb"),
 	})
@@ -58,10 +53,26 @@ func main() {
 		log.Print("Config read from redis")
 	}
 
+	portS, err := client.Get("config:http:port").Result()
+
+	var port uint64
+
+	if err == redis.Nil {
+		fmt.Print("Port was not readable ", port)
+		port = 80
+	} else {
+		port, err = strconv.ParseUint(portS, 10, 32)
+		if err != nil {
+			fmt.Print("Could not parse port string")
+			port = 80
+		}
+	}
+
 	app := iris.New()
 
 	app.Use(recover.New())
 	app.Use(logger.New())
+	app.Logger().Level = golog.DebugLevel
 
 	pugEngine := iris.Pug("./templates", ".pug").Binary(Asset, AssetNames)
 	pugEngine.Reload(true)
@@ -71,163 +82,34 @@ func main() {
 
 	app.Use(func(ctx context.Context) {
 		ip := net.ParseIP(ctx.RemoteAddr())
-		_, e := client.HGet("machine:" + ip.String(), "mac").Result()
+		key := "machine:" + ip.String()
+		num, e := client.Exists(key).Result()
+		if num == 0 {
+			ctx.StatusCode(iris.StatusBadRequest)
+			ctx.View("static.pug")
+			return
+		}
+		_, e = client.HGet(key, "mac").Result()
 		if e == redis.Nil {
 			ctx.StatusCode(iris.StatusBadRequest)
 			ctx.View("static.pug")
 			return
-		} else {
-			ctx.Next()
 		}
-	})
-
-	app.Get("/", func(ctx context.Context) {
-		ctx.Gzip(true)
-		ip := net.ParseIP(ctx.RemoteAddr())
-		_, e := client.HGet("machine:" + ip.String(), "name").Result()
-		if e == redis.Nil {
-			ctx.Redirect("/login")
-		} else {
-			ctx.Redirect("/dashboard", iris.StatusPermanentRedirect)
-		}
-	})
-
-	app.Get("/login", func(ctx context.Context) {
-		ctx.Gzip(true)
-		ctx.View("login.pug")
-	})
-
-	app.Get("/dashboard", func(ctx context.Context) {
-		ctx.Gzip(true)
-		ip := net.ParseIP(ctx.RemoteAddr())
-		name, e := client.HGet("machine:" + ip.String(), "name").Result()
-		if e == redis.Nil {
-			ctx.Redirect("/login")
-			return
-		}
-		ctx.ViewData("", DashboardInfo{Visitor{name},
-			activeDeviceCount(*client),
-			storedNameRecords(*client),
-			activeServers(*client),
-			activeGames(*client)})
-		ctx.View("dashboard.pug")
-	})
-
-	app.Get("/leave", func(ctx context.Context) {
-		ip := net.ParseIP(ctx.RemoteAddr())
-		name, e := client.HGet("machine:" + ip.String(), "name").Result()
-		if e == nil {
-			log.Print("Deleting machine information")
-			_, e := client.HDel("machine:" + ip.String(), "name").Result()
-			if e == nil {
-				log.Print("Deleting dns entries")
-				go deleteAllKeysMatching("record:" + name[0:len(name)-1] + ":*", *client)
+		path := ctx.Request().RequestURI
+		if !(strings.Index(path, "/api") == 0 || strings.Index(path, "/login") == 0) {
+			_, err := client.HGet(key, "name").Result()
+			if err == redis.Nil {
 				ctx.Redirect("/login", iris.StatusTemporaryRedirect)
-				ctx.Header("Pragma", "no-cache")
-				ctx.WriteString("OK")
-			} else {
-				ctx.StatusCode(iris.StatusInternalServerError)
-				log.Print(e)
+				return
 			}
 		}
+		ctx.Next()
 	})
 
-	app.Post("/api/register", func(ctx context.Context) {
+	app.Controller("/", new(IndexController), *client)
+	app.Controller("/dashboard", new(DashboardController), *client)
+	app.Controller("/api", new(ApiController), *client)
 
-		ip := net.ParseIP(ctx.RemoteAddr())
-		mac, e := client.HGet("machine:" + ip.String(), "mac").Result()
-		if e == redis.Nil {
-			ctx.StatusCode(404)
-			ctx.WriteString("Your device wasn't found on this server, is your address assigned statically?\n")
-			return
-		}
-		log.Print("Incoming request from ", ip, " with HWAddr ", mac)
-
-		//TODO check mac
-		visitor := Visitor{}
-		err = ctx.ReadForm(&visitor)
-		if err != nil {
-			log.Fatalln("Could not parse IP", err)
-			ctx.StatusCode(500)
-			ctx.WriteString("Internal Error\n")
-			log.Fatal(err)
-			return
-		}
-		name := visitor.Name
-		if name == "master" {
-			ctx.StatusCode(403)
-			ctx.WriteString("Name \"master\" can't be chosen\n")
-			return
-		}
-		_, err = client.HSet("machine:" + ip.String(), "name", name + ".").Result()
-		if  e != nil {
-			log.Fatalln("Could not write to redis", e)
-		}
-		_, e = client.HSet("record:" + name, "type", "A").Result()
-		if  e != nil {
-			log.Fatalln("Could not write to redis", e)
-		}
-		_, e = client.HSet("record:" + name, "host", ip.String()).Result()
-		if  e != nil {
-			log.Fatalln("Could not write to redis", e)
-		}
-		ctx.WriteString("Okay\n")
-	})
-
-	app.Run(iris.Addr(setting + ":80"))
+	app.Run(iris.Addr(setting + ":" + strconv.FormatUint(port, 10)), iris.WithoutVersionChecker, iris.WithCharset("UTF-8"))
 }
 
-func deleteAllKeysMatching(pattern string, client redis.Client) {
-	log.Print("Loading keys to delete for pattern: " + pattern)
-	keys, e := client.Keys(pattern).Result()
-	log.Println(e, keys)
-	if e == nil {
-		for i := 0; i < len(keys);i++  {
-			key := keys[i]
-			log.Print("Deleting ", key)
-			client.Del(key)
-		}
-	} else {
-		log.Fatalln("Could not clear DNS entries", e)
-	}
-}
-
-func activeDeviceCount(client redis.Client) uint32 {
-	keys, e := client.Keys("machine:*").Result()
-	if e == redis.Nil {
-		print(e)
-		return uint32(0)
-	} else {
-		return uint32(len(keys))
-	}
-}
-
-func storedNameRecords(client redis.Client) uint32 {
-	keys, e := client.Keys("record:*").Result()
-	if e == redis.Nil {
-		print(e)
-		return uint32(0)
-	} else {
-		return uint32(len(keys))
-	}
-}
-
-func activeServers(client redis.Client) uint32 {
-	keys, e := client.Keys("server:*").Result()
-	if e == redis.Nil {
-		print(e)
-		return uint32(0)
-	} else {
-		return uint32(len(keys))
-	}
-}
-
-func activeGames(client redis.Client) uint32 {
-	keys, e := client.Keys("game:*").Result()
-	if e == redis.Nil {
-		print(e)
-		return uint32(0)
-	} else {
-		return uint32(len(keys))
-	}
-}

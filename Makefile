@@ -17,7 +17,6 @@ copy_assets:
 	mkdir -p assets/js
 	mkdir -p assets/css
 	mkdir -p assets/fonts
-	mkdir -p assets/templates
 	cp -r bower_components/jquery/dist/jquery.min.* assets/js
 	cp -r bower_components/font-awesome/css/*.min.css assets/css
 	cp -r bower_components/font-awesome/css/*.css.map assets/css

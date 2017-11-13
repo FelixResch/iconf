@@ -12,3 +12,14 @@ function menu_open() {
 function menu_close() {
     $(sidebar, overlay).css('display', 'none')
 }
+
+function load_data() {
+    $('#activeDevices').load("/api/active/devices");
+    $('#activeServers').load("/api/active/servers");
+    $('#activeRecords').load("/api/active/records");
+    $('#activeGames').load("/api/active/games");
+}
+
+$(() => {
+    load_data();
+});

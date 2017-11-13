@@ -15,7 +15,7 @@ html
                 |   Menu
             span.w3-bar-item.w3-right iDHCP/iDNS Control Center
         // Sidebar/menu
-        nav#mySidebar.w3-sidebar.w3-collapse.w3-white.w3-animate-left(style='z-index:3;width:300px;')
+        nav#mySidebar.w3-sidebar.w3-collapse.w3-white(style='z-index:3;width:300px;')
             br
             .w3-container.w3-row
                 .w3-col.s12.w3-bar
@@ -37,22 +37,22 @@ html
                 a.w3-bar-item.w3-button.w3-padding.w3-blue(href='/dashboard')
                     i.fa.fa-dashboard.fa-fw
                     |   Dashboard
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/devices')
                     i.fa.fa-laptop.fa-fw
                     |   Devices
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/servers')
                     i.fa.fa-server.fa-fw
                     |   Servers
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/records')
                     i.fa.fa-map-marker.fa-fw
                     |   Name Records
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/games')
                     i.fa.fa-gamepad.fa-fw
                     |   Games
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/admin')
                     i.fa.fa-users.fa-fw
                     |   Admin
-                a.w3-bar-item.w3-button.w3-padding(href='#')
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/settings')
                     i.fa.fa-cog.fa-fw
                     |   Settings
                 br
@@ -73,7 +73,7 @@ html
                         .w3-left
                             i.fa.fa-laptop.w3-xxxlarge
                         .w3-right
-                            h3= .ActiveDevices
+                            h3#activeDevices
                         .w3-clear
                         h4 Devices
                 .w3-quarter
@@ -81,7 +81,7 @@ html
                         .w3-left
                             i.fa.fa-server.w3-xxxlarge
                         .w3-right
-                            h3= .ActiveServers
+                            h3#activeServers
                         .w3-clear
                         h4 Servers
                 .w3-quarter
@@ -89,7 +89,7 @@ html
                         .w3-left
                             i.fa.fa-map-marker.w3-xxxlarge
                         .w3-right
-                            h3= .StoredNameRecords
+                            h3#activeRecords
                         .w3-clear
                         h4 Name Records
                 .w3-quarter
@@ -97,7 +97,7 @@ html
                         .w3-left
                             i.fa.fa-gamepad.w3-xxxlarge
                         .w3-right
-                            h3= .ActiveGames
+                            h3#activeGames
                         .w3-clear
                         h4 Games
             .w3-panel

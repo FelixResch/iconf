@@ -1,0 +1,82 @@
+doctype html
+html
+    title Dashboard
+    meta(charset='UTF-8')
+    meta(name='viewport', content='width=device-width, initial-scale=1')
+    link(rel='stylesheet', href='/static/css/w3.css', type='text/css')
+    link(rel='stylesheet', href='/static/css/font-awesome.min.css', type='text/css')
+    script(src='/static/js/jquery.min.js')
+    script(src='/static/js/app.dashboard.devices.js')
+    body.w3-light-grey
+        // Top container
+        .w3-bar.w3-top.w3-black.w3-large(style='z-index:4')
+            button.w3-bar-item.w3-button.w3-hide-large.w3-hover-none.w3-hover-text-light-grey(onclick='menu_open();')
+                i.fa.fa-bars
+                |   Menu
+            span.w3-bar-item.w3-right iDHCP/iDNS Control Center
+        // Sidebar/menu
+        nav#mySidebar.w3-sidebar.w3-collapse.w3-white(style='z-index:3;width:300px;')
+            br
+            .w3-container.w3-row
+                .w3-col.s12.w3-bar
+                    span
+                        | Welcome,&nbsp;
+                        strong= .Visitor.Name
+                    br
+                    a.w3-bar-item.w3-button(href='#')
+                        i.fa.fa-user
+                    a.w3-bar-item.w3-button(href='/leave')
+                        i.fa.fa-sign-out
+            hr
+            .w3-container
+                h5 Dashboard
+            .w3-bar-block
+                a.w3-bar-item.w3-button.w3-padding-16.w3-hide-large.w3-dark-grey.w3-hover-black(href='#', onclick='menu_close()', title='close menu')
+                    i.fa.fa-remove.fa-fw
+                    |   Close Menu
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard')
+                    i.fa.fa-dashboard.fa-fw
+                    |   Dashboard
+                a.w3-bar-item.w3-button.w3-padding.w3-blue(href='/dashboard/devices')
+                    i.fa.fa-laptop.fa-fw
+                    |   Devices
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/servers')
+                    i.fa.fa-server.fa-fw
+                    |   Servers
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/records')
+                    i.fa.fa-map-marker.fa-fw
+                    |   Name Records
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/games')
+                    i.fa.fa-gamepad.fa-fw
+                    |   Games
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/admin')
+                    i.fa.fa-users.fa-fw
+                    |   Admin
+                a.w3-bar-item.w3-button.w3-padding(href='/dashboard/settings')
+                    i.fa.fa-cog.fa-fw
+                    |   Settings
+                br
+                br
+        // Overlay effect when opening sidebar on small screens
+        #myOverlay.w3-overlay.w3-hide-large.w3-animate-opacity(onclick='menu_close()', style='cursor:pointer', title='close side menu')
+        // !PAGE CONTENT!
+        .w3-main(style='margin-left:300px;margin-top:43px;')
+            // Header
+            header.w3-container(style='padding-top:22px')
+                h5
+                    b
+                        i.fa.fa-laptop
+                        |  Devices
+            .w3-panel
+                .w3-row-padding(style='margin:0 -16px')
+                    .w3-row
+                        // TODO implement with sse or websockets
+                        table.w3-table.w3-striped.w3-white#mainTable
+                            thead
+                                tr
+                                    th MAC
+                                    th IP
+                                    th Name
+                                    th Records
+                                    th Servers
+                            tbody
